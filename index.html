@@ -12,26 +12,68 @@
 
 /* ── Tokens ── */
 :root {
-  --bg:          #f9f8f6;
-  --surface:     #ffffff;
-  --border:      #e2e0db;
-  --border-subtle: #eeece8;
-  --text:        #1a1917;
-  --text-2:      #6b6860;
-  --text-3:      #9b998f;
-  --accent:      #2b59ff;
-  --accent-bg:   #edf0ff;
-  --accent-text: #1637cc;
-  --ok:          #136b3c;
-  --ok-bg:       #eaf5ee;
-  --ok-border:   #a3d9b8;
-  --err:         #b91c1c;
-  --err-bg:      #fef2f2;
-  --err-border:  #fca5a5;
-  --mono:        'IBM Plex Mono', monospace;
-  --sans:        'IBM Plex Sans', system-ui, sans-serif;
-  --radius:      6px;
-  --radius-lg:   10px;
+  --bg:           #f9f8f6;
+  --surface:      #ffffff;
+  --border:       #e2e0db;
+  --border-subtle:#eeece8;
+  --border-hover: #ccc;
+  --text:         #1a1917;
+  --text-2:       #6b6860;
+  --text-3:       #9b998f;
+  --accent:       #2b59ff;
+  --accent-bg:    #edf0ff;
+  --accent-text:  #1637cc;
+  --ok:           #136b3c;
+  --ok-bg:        #eaf5ee;
+  --ok-border:    #a3d9b8;
+  --err:          #b91c1c;
+  --err-bg:       #fef2f2;
+  --err-border:   #fca5a5;
+  --mono:         'IBM Plex Mono', monospace;
+  --sans:         'IBM Plex Sans', system-ui, sans-serif;
+  --radius:       6px;
+  --radius-lg:    10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:           #111110;
+    --surface:      #1c1b19;
+    --border:       #2e2c28;
+    --border-subtle:#242320;
+    --border-hover: #3d3b36;
+    --text:         #f0ede8;
+    --text-2:       #9b998f;
+    --text-3:       #5a5850;
+    --accent:       #5271ff;
+    --accent-bg:    #0d1533;
+    --accent-text:  #8ba0ff;
+    --ok:           #4ade80;
+    --ok-bg:        #052a12;
+    --ok-border:    #166534;
+    --err:          #f87171;
+    --err-bg:       #2d0808;
+    --err-border:   #991b1b;
+  }
+}
+[data-theme="dark"] {
+  --bg:           #111110;
+  --surface:      #1c1b19;
+  --border:       #2e2c28;
+  --border-subtle:#242320;
+  --border-hover: #3d3b36;
+  --text:         #f0ede8;
+  --text-2:       #9b998f;
+  --text-3:       #5a5850;
+  --accent:       #5271ff;
+  --accent-bg:    #0d1533;
+  --accent-text:  #8ba0ff;
+  --ok:           #4ade80;
+  --ok-bg:        #052a12;
+  --ok-border:    #166534;
+  --err:          #f87171;
+  --err-bg:       #2d0808;
+  --err-border:   #991b1b;
 }
 
 /* ── Base ── */
@@ -91,7 +133,7 @@ body {
   text-align: left;
   line-height: 1.35;
 }
-.tab:hover { background: var(--bg); color: var(--text); border-color: #ccc; }
+.tab:hover { background: var(--bg); color: var(--text); border-color: var(--border-hover); }
 .tab:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -203,7 +245,7 @@ body {
 }
 .opt:hover:not([disabled]) {
   background: var(--bg);
-  border-color: #ccc;
+  border-color: var(--border-hover);
 }
 .opt:focus-visible {
   outline: 2px solid var(--accent);
@@ -276,7 +318,7 @@ body {
   transition: background 0.1s, border-color 0.1s;
   font-weight: 400;
 }
-.btn:hover { background: var(--bg); border-color: #ccc; }
+.btn:hover { background: var(--bg); border-color: var(--border-hover); }
 .btn:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -329,6 +371,28 @@ body {
   flex-wrap: wrap;
 }
 
+/* ── Theme toggle ── */
+#themeToggle {
+  position: fixed;
+  top: 14px;
+  right: 16px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  z-index: 100;
+}
+#themeToggle:hover { background: var(--bg); border-color: var(--border-hover); color: var(--text); }
+#themeToggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 /* ── Responsive ── */
 @media (max-width: 480px) {
   #app { padding: 1.5rem 1rem 3rem; }
@@ -337,6 +401,7 @@ body {
 </style>
 </head>
 <body>
+<button id="themeToggle" title="Toggle theme" aria-label="Toggle theme">🌙</button>
 <div id="app">
   <div class="header">
     <h1>Compiler Design — MCQ Drill</h1>
@@ -348,6 +413,26 @@ body {
 </div>
 
 <script>
+// ── Theme toggle ──
+(function() {
+  const btn = document.getElementById('themeToggle');
+  const stored = localStorage.getItem('theme');
+  const sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  let dark = stored ? stored === 'dark' : sysDark;
+
+  function apply() {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    btn.textContent = dark ? '☀️' : '🌙';
+  }
+  apply();
+
+  btn.addEventListener('click', () => {
+    dark = !dark;
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+    apply();
+  });
+})();
+
 const ROUNDS = [
   {
     id: 0, label: "Module 2", subtitle: "Syntax Analysis",
