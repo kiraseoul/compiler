@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compiler Design — MCQ Drill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Tokens ── */
+:root {
+  --bg:          #f9f8f6;
+  --surface:     #ffffff;
+  --border:      #e2e0db;
+  --border-subtle: #eeece8;
+  --text:        #1a1917;
+  --text-2:      #6b6860;
+  --text-3:      #9b998f;
+  --accent:      #2b59ff;
+  --accent-bg:   #edf0ff;
+  --accent-text: #1637cc;
+  --ok:          #136b3c;
+  --ok-bg:       #eaf5ee;
+  --ok-border:   #a3d9b8;
+  --err:         #b91c1c;
+  --err-bg:      #fef2f2;
+  --err-border:  #fca5a5;
+  --mono:        'IBM Plex Mono', monospace;
+  --sans:        'IBM Plex Sans', system-ui, sans-serif;
+  --radius:      6px;
+  --radius-lg:   10px;
+}
+
+/* ── Base ── */
+html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100dvh;
+}
+
+/* ── Layout ── */
+#app {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 4rem;
+}
+
+/* ── Header ── */
+.header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.header h1 {
+  font-family: var(--mono);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.header p {
+  font-size: 0.8125rem;
+  color: var(--text-2);
+  margin-top: 3px;
+}
+
+/* ── Round tabs ── */
+.round-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.tab {
+  padding: 7px 13px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  font-size: 0.8125rem;
+  font-family: var(--sans);
+  font-weight: 400;
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text-2);
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  text-align: left;
+  line-height: 1.35;
+}
+.tab:hover { background: var(--bg); color: var(--text); border-color: #ccc; }
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.tab.active {
+  background: var(--text);
+  color: var(--surface);
+  border-color: var(--text);
+}
+.tab.done {
+  border-color: var(--ok-border);
+  color: var(--ok);
+  background: var(--ok-bg);
+}
+.tab.done.active {
+  background: var(--ok);
+  color: #fff;
+  border-color: var(--ok);
+}
+
+/* ── Progress ── */
+.progress-bar {
+  height: 2px;
+  background: var(--border-subtle);
+  border-radius: 99px;
+  margin-bottom: 1.75rem;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.35s ease;
+  border-radius: 99px;
+}
+
+/* ── Batch meta ── */
+.batch-header {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  margin-bottom: 1rem;
+  font-family: var(--mono);
+}
+
+/* ── Question card ── */
+.q-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.375rem;
+  margin-bottom: 0.875rem;
+}
+
+.q-meta {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  color: var(--text-3);
+  margin-bottom: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.q-text {
+  font-size: 0.9375rem;
+  color: var(--text);
+  line-height: 1.65;
+  margin-bottom: 1rem;
+}
+
+.q-text code {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  background: var(--bg);
+  border: 1px solid var(--border-subtle);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+/* ── Options ── */
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 13px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  font-size: 0.875rem;
+  font-family: var(--sans);
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  transition: background 0.1s, border-color 0.1s;
+  line-height: 1.55;
+  width: 100%;
+}
+.opt-label {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--text-3);
+  flex-shrink: 0;
+  margin-top: 1px;
+  min-width: 18px;
+}
+.opt:hover:not([disabled]) {
+  background: var(--bg);
+  border-color: #ccc;
+}
+.opt:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* States */
+.opt.selected {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent-text);
+}
+.opt.selected .opt-label { color: var(--accent); }
+
+.opt.correct {
+  border-color: var(--ok-border);
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+.opt.correct .opt-label { color: var(--ok); }
+
+.opt.wrong {
+  border-color: var(--err-border);
+  background: var(--err-bg);
+  color: var(--err);
+}
+.opt.wrong .opt-label { color: var(--err); }
+
+.opt.reveal-correct {
+  border-color: var(--ok-border);
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+.opt.reveal-correct .opt-label { color: var(--ok); }
+
+.opt[disabled] { cursor: default; }
+
+/* ── Explanation ── */
+.explanation {
+  display: none;
+  margin-top: 0.875rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg);
+  border-radius: var(--radius);
+  border-left: 2px solid var(--accent);
+  font-size: 0.8125rem;
+  color: var(--text-2);
+  line-height: 1.7;
+}
+.explanation.show { display: block; }
+
+/* ── Navigation ── */
+.batch-nav {
+  display: flex;
+  gap: 8px;
+  margin-top: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  font-size: 0.875rem;
+  font-family: var(--sans);
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text);
+  transition: background 0.1s, border-color 0.1s;
+  font-weight: 400;
+}
+.btn:hover { background: var(--bg); border-color: #ccc; }
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 500;
+}
+.btn.primary:hover { background: var(--accent-text); border-color: var(--accent-text); }
+
+.score-chip {
+  margin-left: auto;
+  font-size: 0.8125rem;
+  color: var(--text-2);
+  font-family: var(--mono);
+}
+.score-chip span { color: var(--text); font-weight: 500; }
+
+/* ── Round complete ── */
+.round-complete {
+  text-align: center;
+  padding: 3rem 1rem 2rem;
+}
+.big-score {
+  font-family: var(--mono);
+  font-size: 3rem;
+  font-weight: 500;
+  color: var(--accent);
+  margin: 0.5rem 0 1rem;
+  letter-spacing: -0.03em;
+}
+.round-complete h2 {
+  font-size: 1.0625rem;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.round-complete p {
+  font-size: 0.875rem;
+  color: var(--text-2);
+  margin-bottom: 1.5rem;
+}
+.round-complete-btns {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  #app { padding: 1.5rem 1rem 3rem; }
+  .big-score { font-size: 2.25rem; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Compiler Design — MCQ Drill</h1>
+    <p>BCSE307L · Batches of 5 · Module 2 → 1 → 4 → 3</p>
+  </div>
+  <div class="round-tabs" id="roundTabs"></div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div id="quizArea"></div>
+</div>
+
+<script>
+const ROUNDS = [
+  {
+    id: 0, label: "Module 2", subtitle: "Syntax Analysis",
+    questions: [
+      { q: "Which of the following grammars is ambiguous?", opts: ["S → aSb | ε", "S → aS | Sa | ε", "S → (S) | ε", "S → aS | a"], ans: 1, exp: "S → aS | Sa | ε is ambiguous because a string like 'aa' has two parse trees. Option A (matching brackets) and D (right-recursive) are unambiguous." },
+      { q: "In LL(1) parsing, the predictive parsing table entry M[A, a] is filled when:", opts: ["a ∈ FOLLOW(A) and ε ∈ FIRST(α)", "a ∈ FIRST(α) for production A → α", "Both A and B", "a ∈ FIRST(α) OR (ε ∈ FIRST(α) and a ∈ FOLLOW(A))"], ans: 3, exp: "The rule: add A→α to M[A,a] if a ∈ FIRST(α), OR if ε ∈ FIRST(α) and a ∈ FOLLOW(A). Both conditions must be checked — option D is the complete rule." },
+      { q: "A shift-reduce conflict in SLR parsing occurs when:", opts: ["Two productions have the same RHS", "The parser can either shift the next token or reduce by a production", "FIRST and FOLLOW sets overlap", "The grammar is left-recursive"], ans: 1, exp: "A shift-reduce conflict: the current state has both a shift action and a reduce action for the same lookahead token. It signals potential grammar ambiguity." },
+      { q: "Which statement about LALR(1) vs CLR(1) is correct?", opts: ["LALR(1) has more states than CLR(1)", "CLR(1) and LALR(1) have the same number of states", "LALR(1) merges states with identical cores, CLR(1) does not", "CLR(1) cannot handle reduce-reduce conflicts"], ans: 2, exp: "LALR(1) merges CLR(1) states that share the same core (LR(0) items) but differ only in lookahead sets. This reduces states but can introduce reduce-reduce conflicts that CLR(1) would not have." },
+      { q: "For operator precedence parsing, the operator precedence relation a ⋖ b means:", opts: ["a has higher precedence than b", "a has lower precedence than b, so b is taken onto stack first", "a and b have equal precedence", "a appears before b in the grammar"], ans: 1, exp: "a ⋖ b means a 'yields precedence' to b — b has higher precedence and should be evaluated first (b goes deeper in the parse tree). Confusingly, ⋖ means a < b in precedence." },
+      { q: "In an LR(0) item, a dot (•) at the end of a production like [A → α •] indicates:", opts: ["The parser is about to shift α", "A complete item — the parser can reduce by A → α", "The item is the initial item", "The parser needs one more lookahead"], ans: 1, exp: "A complete item [A → α •] means the entire RHS α has been seen and is on the stack. The parser can reduce: pop |α| symbols, push A." },
+      { q: "Which parsing technique uses a stack and an input buffer and makes decisions based on the stack top and current input symbol?", opts: ["Recursive descent parsing", "LL(1) predictive parsing", "Shift-reduce parsing", "Earley parsing"], ans: 2, exp: "Shift-reduce parsers maintain an explicit stack. They decide to SHIFT (push input onto stack) or REDUCE (replace RHS on stack with LHS) based on stack top + current input." },
+      { q: "The FOLLOW set of the start symbol S always contains:", opts: ["ε", "The first terminal of S's productions", "$ (end-of-input marker)", "All terminals in the grammar"], ans: 2, exp: "By definition, $ is placed in FOLLOW(S) for the start symbol S. This is the base case for computing FOLLOW sets." },
+      { q: "Left factoring a grammar is done primarily to:", opts: ["Eliminate left recursion", "Make the grammar suitable for LL(1) parsing by removing common prefixes", "Reduce the number of productions", "Eliminate ε-productions"], ans: 1, exp: "Left factoring addresses the problem where two productions A → αβ1 | αβ2 share a common prefix α. An LL(1) parser can't decide which to use without reading past α, so we factor: A → αA', A' → β1 | β2." },
+      { q: "In SLR(1) construction, a reduce action for item [A → α •] is added to M[state, a] where:", opts: ["a ∈ FIRST(α)", "a ∈ FOLLOW(A)", "a ∈ FIRST(A)", "a is any terminal"], ans: 1, exp: "SLR(1): reduce by A→α in state s for all a ∈ FOLLOW(A). This is the key difference from LR(0) (which reduces for all terminals) and CLR(1) (which uses precise lookaheads from items)." },
+      { q: "Which of the following is NOT a valid way to eliminate ambiguity?", opts: ["Rewriting the grammar with explicit precedence rules", "Using precedence declarations in parser tools", "Converting grammar to CNF", "Adding associativity rules"], ans: 2, exp: "Converting to Chomsky Normal Form (CNF) changes the grammar structure but does NOT resolve ambiguity — an ambiguous grammar in CNF is still ambiguous. Options A, B, D are real disambiguation strategies." },
+      { q: "The canonical LR(1) item [A → α • aβ, b] means:", opts: ["We've seen α, next expected input is a, and b will follow A when it's reduced", "a and b are both lookaheads", "b is the next symbol to shift", "α has been reduced already"], ans: 0, exp: "LR(1) item = [production with dot, lookahead]. The dot is after α (seen so far). 'a' is next to shift. 'b' is the lookahead — what must follow A in the input after reduction." },
+      { q: "A grammar G is LL(1) if and only if for each non-terminal A with productions A → α | β:", opts: ["FIRST(α) ∩ FIRST(β) = ∅ only", "FIRST(α) ∩ FOLLOW(A) = ∅ only", "FIRST(α) ∩ FIRST(β) = ∅, and if ε ∈ FIRST(α) then FIRST(β) ∩ FOLLOW(A) = ∅", "FOLLOW(α) ∩ FOLLOW(β) = ∅"], ans: 2, exp: "Both conditions must hold: (1) no common FIRST symbols (deterministic choice), and (2) if one alternative can derive ε, its FIRST must not overlap FOLLOW(A) — because then we couldn't tell if we're following A or using the ε-production." },
+      { q: "In recursive descent parsing, a left-recursive grammar like A → Aα | β is problematic because:", opts: ["It causes the parser to loop infinitely without consuming input", "It requires backtracking", "It generates ambiguous parse trees", "It cannot be implemented in any language"], ans: 0, exp: "A recursive descent parser for A → Aα immediately calls A() again before consuming any input → infinite recursion / stack overflow. Fix: eliminate left recursion first." },
+      { q: "Operator precedence parsing works by building a relation table for:", opts: ["All grammar symbols including non-terminals", "Only terminals (operators and operands)", "Only non-terminals", "Pairs of states in the LR automaton"], ans: 1, exp: "Operator precedence parsers define <·, =·, ·> relations only between terminals. Non-terminals are ignored — the grammar must be an operator grammar (no two adjacent non-terminals in any production)." }
+    ]
+  },
+  {
+    id: 1, label: "Module 1", subtitle: "Lexical Analysis",
+    questions: [
+      { q: "Which phase of a compiler is responsible for grouping characters into lexemes?", opts: ["Syntax analyzer", "Semantic analyzer", "Lexical analyzer", "Code generator"], ans: 2, exp: "The lexical analyzer (scanner) reads the character stream and groups characters into lexemes, returning tokens to the parser." },
+      { q: "A token in compiler terminology refers to:", opts: ["The actual character sequence matched", "A pair (token-name, attribute-value) representing a lexical unit", "A node in the parse tree", "An entry in the symbol table"], ans: 1, exp: "A token is an abstract symbol: (token-name, optional-attribute). E.g., (id, pointer-to-symbol-table-entry) or (relop, LE). The lexeme is the actual string matched." },
+      { q: "Which of the following is a valid regular expression for identifiers (letter followed by letters/digits)?", opts: ["(a-z)(a-z|0-9)*", "letter(letter|digit)*", "[letter][digit]*", "letter+digit*"], ans: 1, exp: "letter(letter|digit)* — an identifier starts with exactly one letter, followed by zero or more letters OR digits. Option A uses invalid range syntax for RE. C means one letter then only digits. D means one or more letters then only digits." },
+      { q: "In the direct construction of DFA from a regular expression, what are 'nullable', 'firstpos', and 'lastpos' computed for?", opts: ["Each state of the NFA", "Each node of the syntax tree of the augmented RE", "Each transition in the DFA", "Each symbol in the alphabet"], ans: 1, exp: "In the direct RE→DFA method (Algorithm 3.36 in Dragon Book), nullable/firstpos/lastpos/followpos are computed for each node in the augmented RE's syntax tree. No NFA is constructed." },
+      { q: "The role of a pattern in lexical analysis is:", opts: ["The set of all strings the token can match — described by a regular expression", "The actual string matched from the source code", "The token name returned to the parser", "A state in the DFA"], ans: 0, exp: "Pattern = rule (RE) describing what strings qualify as a token. Lexeme = actual matched string. Token = (name, value) returned to parser. These three are distinct concepts." },
+      { q: "What does the Lex tool use internally to recognize tokens?", opts: ["LL(1) parse table", "Deterministic finite automaton (DFA)", "Pushdown automaton", "Non-deterministic Turing machine"], ans: 1, exp: "Lex compiles user-provided RE patterns into a combined DFA (via NFA→DFA subset construction). The generated scanner simulates this DFA to recognize tokens." },
+      { q: "Which of the following languages CANNOT be described by a regular expression?", opts: ["Strings of even length", "Strings with equal numbers of a's and b's", "Strings starting and ending with the same character", "Strings containing at least one 'ab'"], ans: 1, exp: "L = {a^n b^n | n≥1} requires counting — not regular, requires a PDA. The others are all regular. Equal a's and b's is not regular by the Pumping Lemma." },
+      { q: "In NFA to DFA conversion (subset construction), the initial DFA state is:", opts: ["The NFA start state alone", "ε-closure of the NFA start state", "All NFA states together", "The NFA start state plus all states reachable on the first input symbol"], ans: 1, exp: "The initial DFA state = ε-closure({s0}), the set of all NFA states reachable from start state s0 via ε-transitions alone." },
+      { q: "Which compiler phase typically handles macro expansion and #include directives?", opts: ["Lexical analyzer", "Preprocessor", "Semantic analyzer", "Syntax analyzer"], ans: 1, exp: "The preprocessor (a separate phase before compilation) handles #include, #define, #ifdef etc. The lexical analyzer sees the output of preprocessing." },
+      { q: "An attribute of a token typically stores:", opts: ["The token's position in the DFA", "Additional information like the actual value or symbol table pointer", "The token's NFA state", "The production rule that generated it"], ans: 1, exp: "Token attributes carry semantic info: for 'id', the attribute is a pointer to the symbol table entry; for a number literal, it may be the numeric value itself." },
+      { q: "The extended regular expression notation {m,n} after a pattern means:", opts: ["Match the pattern exactly m+n times", "Match the pattern at least m and at most n times", "Match either m or n occurrences", "Match m patterns followed by n patterns"], ans: 1, exp: "{m,n} is a counted repetition: match at least m, at most n occurrences. {3,5} means 3, 4, or 5 times. It's syntactic sugar over standard RE operators." },
+      { q: "In the direct construction of a DFA from RE, followpos(n) is defined for:", opts: ["Every node in the syntax tree", "Only nullable nodes", "Only leaf nodes (positions) that are not #", "Only the root node"], ans: 2, exp: "followpos is defined per position (leaf node in the syntax tree, each representing one symbol occurrence). It tells you which positions can follow position n in any string the RE matches." },
+      { q: "Which of these is NOT one of the main phases of a compiler?", opts: ["Lexical analysis", "Semantic analysis", "Memory allocation", "Intermediate code generation"], ans: 2, exp: "The 6 main phases: lexical analysis, syntax analysis, semantic analysis, intermediate code generation, code optimization, code generation. Memory allocation/register allocation happen within later phases, not as a standalone main phase." },
+      { q: "The longest match (maximal munch) rule in lexical analysis means:", opts: ["The lexer prefers shorter tokens for efficiency", "The lexer always matches the longest possible string for each token", "The lexer uses the most complex pattern first", "The lexer matches greedily then gives back characters"], ans: 1, exp: "Maximal munch: the scanner always reads as many characters as possible before deciding on a token. E.g., '==' is one EQEQ token, not two '=' tokens." },
+      { q: "LLVM IR (Intermediate Representation) is best described as:", opts: ["A high-level language similar to C", "A strongly-typed, SSA-form low-level IR used as LLVM's central representation", "Assembly language for x86 only", "A binary format not human-readable"], ans: 1, exp: "LLVM IR is typed, in Static Single Assignment (SSA) form, and sits between high-level source and machine code. It's platform-independent and human-readable (text form)." }
+    ]
+  },
+  {
+    id: 2, label: "Module 4", subtitle: "Intermediate Code Gen",
+    questions: [
+      { q: "Three-address code (TAC) is called so because:", opts: ["It uses 3 registers", "Each instruction has at most 3 operands (result and two sources)", "It has 3 types of statements", "It requires 3 passes to generate"], ans: 1, exp: "TAC: each statement has the form x = y op z — at most 3 addresses (names/temps). This simplicity makes TAC easy to optimize and translate to machine code." },
+      { q: "Which TAC representation uses a list of records with fields (op, arg1, arg2, result)?", opts: ["Indirect triples", "Quadruples", "Triples", "Syntax trees"], ans: 1, exp: "Quadruples: 4 fields (operator, arg1, arg2, result). Triples: 3 fields (op, arg1, arg2) — result referenced by statement number. Indirect triples: array of pointers to triples." },
+      { q: "In backpatching for boolean expressions, 'truelist' and 'falselist' contain:", opts: ["Variable names for true/false values", "Addresses of goto instructions with unfilled targets", "Values 0 and 1 respectively", "Labels in the source code"], ans: 1, exp: "Backpatching defers filling in jump targets. truelist/falselist hold addresses of conditional/unconditional jump instructions whose target labels are not yet known. 'backpatch(list, label)' fills them in later." },
+      { q: "The TAC for a[i][j] (row-major 2D array) access typically involves:", opts: ["A single array lookup instruction", "Computing offset = i * (number of columns) + j, then base + offset", "Two separate memory accesses", "Only pointer arithmetic without multiplication"], ans: 1, exp: "Row-major 2D array: element [i][j] is at base + (i * cols + j) * elem_size. TAC generates the offset computation explicitly using multiplications and additions." },
+      { q: "Static single assignment (SSA) form requires:", opts: ["Each variable is assigned exactly once in the program text", "Each variable has at most one definition in the program", "Phi functions at merge points in the control flow graph", "Both B and C"], ans: 3, exp: "SSA: (1) each variable defined exactly once (use subscripts: x1, x2...), and (2) φ-functions at join points where multiple definitions meet. Both properties together define SSA." },
+      { q: "In TAC generation for a while loop 'while (E) S', the structure is:", opts: ["Generate S first, then E", "Label before E, evaluate E, conditional jump past S, generate S, unconditional jump back to E-label", "Generate E once, then loop S", "No jumps needed — inline expansion"], ans: 1, exp: "Pattern: L1: [code for E, jump to L2 if false] [code for S] goto L1 L2: ... This creates the loop back-edge and exit." },
+      { q: "A DAG (Directed Acyclic Graph) for basic block optimization is useful because:", opts: ["It detects dead code across procedures", "It identifies common subexpressions automatically by sharing nodes", "It eliminates all temporary variables", "It performs loop invariant code motion"], ans: 1, exp: "In a DAG for a basic block, identical computations share the same node. This directly identifies common subexpressions (CSE) to avoid recomputation." },
+      { q: "For switch-case translation, which method is efficient when case values are dense (contiguous)?", opts: ["Chain of if-then-else", "Jump table (indexed branch)", "Binary search on sorted cases", "Hash table"], ans: 1, exp: "Dense cases → jump table: create an array of labels indexed by case value, do a single indirect jump. O(1) dispatch. Sparse cases → binary search or hash table is better." },
+      { q: "In TAC for procedure calls, the 'param' instruction is used to:", opts: ["Declare a parameter in the procedure definition", "Push an argument onto the argument list before a call instruction", "Allocate space for local variables", "Pass the return value back"], ans: 1, exp: "TAC sequence: param a1, param a2, ..., call p, n — the 'param' instructions set up arguments, then 'call p, n' invokes procedure p with n parameters." },
+      { q: "The 'nextquad' pointer in backpatching refers to:", opts: ["The index of the last generated instruction", "The index of the next instruction to be generated", "A pointer to the next quad in a list", "The jump target in the current instruction"], ans: 1, exp: "nextquad = the index of the next instruction to be emitted. When you need to backpatch a jump, you capture the current nextquad as the target and fill it in later." },
+      { q: "Triples representation of TAC differs from quadruples in that:", opts: ["Triples use 4 fields, quadruples use 3", "Triples reference results by statement number, not a named result field", "Triples cannot represent array accesses", "Triples require SSA form"], ans: 1, exp: "Triples: (op, arg1, arg2) — no explicit result name. Results referenced as (i) meaning 'result of statement i'. Problem: hard to reorder statements (references break). Quadruples use a result field, easier to optimize." },
+      { q: "L-attributed SDDs (used in Module 3) can be evaluated during:", opts: ["Only bottom-up parsing", "Only top-down parsing", "Both top-down parsing and in a single left-to-right pass during bottom-up parsing", "Only after the entire parse tree is built"], ans: 2, exp: "L-attributed: attributes can be inherited from parent/left-sibling + synthesized from children. This ordering is compatible with left-to-right traversal — works with both top-down parsers and in a single LR parse pass." },
+      { q: "In intermediate code generation, a 'temporary' variable is used to:", opts: ["Store the final output of the program", "Hold intermediate results of expression evaluation", "Replace all user-defined variables", "Represent basic blocks"], ans: 1, exp: "Temporaries (t1, t2, ...) hold partial results of complex expressions in TAC. They're compiler-generated names that don't exist in the source program." },
+      { q: "For boolean short-circuit evaluation of 'A && B', if A is false:", opts: ["B is always evaluated", "B is not evaluated — jump directly to false branch", "Both A and B are evaluated first, then ANDed", "A is evaluated twice"], ans: 1, exp: "Short-circuit (lazy) evaluation: in A && B, if A is false, the whole expression is false — no need to evaluate B. TAC generates a conditional jump after A's code that bypasses B's code." },
+      { q: "Which of the following is NOT a common form of three-address statement?", opts: ["x = y op z", "x = op y (unary)", "if x relop y goto L", "x = y[z[w]] (nested indirect index)"], ans: 3, exp: "Standard TAC instructions are: binary op, unary op, copy, conditional jump, unconditional goto, array access (x=y[i] or x[i]=y), pointer ops, and procedure calls — all with at most 3 addresses. Nested indexing x=y[z[w]] is not a single TAC instruction; it takes two instructions." }
+    ]
+  },
+  {
+    id: 3, label: "Module 3", subtitle: "Semantic Analysis",
+    questions: [
+      { q: "A Syntax Directed Definition (SDD) associates:", opts: ["Productions with semantic actions only", "Each grammar symbol with a set of attributes, and each production with semantic rules", "Tokens with data types", "Parse tree nodes with memory addresses"], ans: 1, exp: "SDD = grammar + attributes for symbols + semantic rules (equations) for each production. The rules define how attribute values are computed." },
+      { q: "An inherited attribute of a non-terminal A is one whose value is determined by:", opts: ["A's children only", "A's parent and/or siblings (nodes to the left) in the parse tree", "A's synthesized attributes", "The lexical analyzer"], ans: 1, exp: "Inherited attributes flow downward/sideways in the parse tree: computed from parent and left-sibling attributes. Synthesized attributes flow upward: computed from children." },
+      { q: "An S-attributed SDD is one where:", opts: ["Only synthesized attributes are used", "Only inherited attributes are used", "Both S and L attributed rules are combined", "Attributes are evaluated top-down"], ans: 0, exp: "S-attributed: only synthesized attributes. All semantic rules compute a non-terminal's attribute from its children's attributes. Can be evaluated bottom-up during LR parsing." },
+      { q: "In a Syntax Directed Translation (SDT) scheme, semantic actions embedded in the middle of a production body:", opts: ["Are always executed before the entire production is matched", "Are executed when the symbol to their right is about to be processed", "Are executed when the parser shifts the preceding symbol", "Cannot be implemented in LR parsers without transformation"], ans: 3, exp: "Mid-rule actions in LR parsing require a transformation: create a marker non-terminal M → ε with the action. LR parsers only execute actions on reductions, not mid-shift." },
+      { q: "The 'val' attribute in a simple expression grammar computing arithmetic values is typically:", opts: ["An inherited attribute passed from parent", "A synthesized attribute computed from children's values", "Neither inherited nor synthesized", "A lexical attribute from the scanner"], ans: 1, exp: "val is the classic synthesized attribute: E.val = E1.val + T.val for E → E + T. Computed bottom-up from children, propagated upward." },
+      { q: "Which of the following correctly describes an L-attributed SDD?", opts: ["All attributes are inherited", "For each production A → X1X2...Xn, an attribute of Xi can depend on attributes of X1...X(i-1) and A's inherited attributes", "Attributes are evaluated right-to-left", "Only terminal attributes matter"], ans: 1, exp: "L-attributed: each attribute of Xi in A → X1...Xn can depend on (a) A's inherited attrs, (b) synthesized attrs of X1..X(i-1), (c) Xi's own inherited attrs computed from above. Dependency is left-to-right." },
+      { q: "Dependency graphs in SDD evaluation are used to:", opts: ["Build the parse tree", "Determine a valid evaluation order for attributes", "Generate TAC directly", "Detect grammar ambiguity"], ans: 1, exp: "Dependency graph: nodes = attribute instances, edges = dependencies. A topological sort of this DAG gives a valid order to evaluate attributes. Cycles mean the SDD is not well-defined." },
+      { q: "Type checking is an application of semantic analysis. Which attribute grammar concept is primarily used?", opts: ["Synthesized 'type' attributes propagated up the tree", "Inherited 'type' attributes passed down (e.g., declaration type to identifiers)", "Both synthesized and inherited type attributes", "No attributes — handled by separate pass"], ans: 2, exp: "Type checking uses both: type is synthesized (expressions get a type from their operands), and inherited (declared types flow down to where variables are used). Both directions are needed." },
+      { q: "In implementing L-attributed SDDs on an LL parser, inherited attributes of a non-terminal A are:", opts: ["Pushed onto the stack before A is expanded", "Computed after A is fully reduced", "Ignored in LL parsers", "Computed by the lexical analyzer"], ans: 0, exp: "In LL parser SDT: push records onto the stack. Before expanding A, compute A's inherited attributes from parent's attributes (available in the record above on the stack) and push them." },
+      { q: "What is the purpose of an 'annotated parse tree'?", opts: ["A parse tree with token values filled in", "A parse tree with attribute values shown at each node", "A parse tree that has been optimized", "A parse tree for an ambiguous grammar"], ans: 1, exp: "An annotated parse tree is a parse tree where each node is labeled with its attribute values (as computed by the SDD). It's used to visualize/verify SDD evaluation." },
+      { q: "Semantic rules in SDDs are also called:", opts: ["Semantic actions", "Attribution rules or semantic equations", "Translation schemes", "Production rules"], ans: 1, exp: "The rules in an SDD that define how attributes are computed are called semantic rules or attribution rules. SDT schemes embed these as semantic actions within productions." },
+      { q: "Which of the following is an example of a semantic error (caught during semantic analysis)?", opts: ["Missing semicolon", "Using an undeclared variable", "Mismatched parentheses", "Invalid token"], ans: 1, exp: "Undeclared variable = semantic error (type/scope checking). Missing semicolon and mismatched parentheses are syntax errors. Invalid token is a lexical error." },
+      { q: "In bottom-up (LR) parsing with S-attributed SDD, when is the semantic action for a production A → XYZ executed?", opts: ["When X is shifted", "When Y is shifted", "When A → XYZ is reduced (after Z is shifted)", "When the parse tree is complete"], ans: 2, exp: "LR parsers execute semantic actions at REDUCE time. When reducing A → XYZ, the values of X, Y, Z are on the stack — use them to compute A's synthesized attributes." },
+      { q: "The 'synthesized' in 'synthesized attribute' refers to:", opts: ["The attribute being created (synthesized) from nothing", "The attribute being computed (synthesized) from children's attributes", "Attributes used in synthesis of machine code", "Attributes that are inherited from the parent"], ans: 1, exp: "Synthesized = built from children. The non-terminal's attribute value is synthesized/assembled from the attribute values of its children in the parse tree." },
+      { q: "Which tool typically combines lexical analysis, parsing, and semantic action execution?", opts: ["Lex", "YACC/Bison", "LLVM", "GDB"], ans: 1, exp: "YACC (Yet Another Compiler Compiler) / Bison generates LALR(1) parsers with embedded semantic actions (essentially SDT schemes). Lex handles only lexical analysis. LLVM is a backend toolkit." }
+    ]
+  }
+];
+
+let currentRound = 0;
+let currentBatch = 0;
+const BATCH_SIZE = 5;
+let answers = {};
+let revealed = {};
+let roundScores = [null, null, null, null];
+
+function getBatchQuestions() {
+  const qs = ROUNDS[currentRound].questions;
+  const start = currentBatch * BATCH_SIZE;
+  return qs.slice(start, Math.min(start + BATCH_SIZE, qs.length));
+}
+
+function totalBatches(round) {
+  return Math.ceil(ROUNDS[round].questions.length / BATCH_SIZE);
+}
+
+function renderTabs() {
+  const c = document.getElementById('roundTabs');
+  c.innerHTML = ROUNDS.map((r, i) => {
+    let cls = 'tab' + (i === currentRound ? ' active' : '') + (roundScores[i] !== null ? ' done' : '');
+    return `<button class="${cls}" onclick="switchRound(${i})" aria-pressed="${i === currentRound}">${r.label}<br><span style="font-size:11px;opacity:0.65">${r.subtitle}</span></button>`;
+  }).join('');
+}
+
+function renderProgress() {
+  const total = ROUNDS[currentRound].questions.length;
+  const done = Math.min((currentBatch + 1) * BATCH_SIZE, total);
+  document.getElementById('progressFill').style.width = (done / total * 100) + '%';
+}
+
+function getKey(qi) { return `${currentRound}_${currentBatch * BATCH_SIZE + qi}`; }
+
+function renderBatch() {
+  renderTabs();
+  renderProgress();
+  const bqs = getBatchQuestions();
+  const batchNum = currentBatch + 1;
+  const totalB = totalBatches(currentRound);
+  const globalStart = currentBatch * BATCH_SIZE;
+  const scored = bqs.filter((_, i) => revealed[getKey(i)] !== undefined);
+  const correct = bqs.filter((q, i) => answers[getKey(i)] === q.ans && revealed[getKey(i)] !== undefined);
+
+  let html = `<div class="batch-header">Batch ${batchNum} / ${totalB} &nbsp;·&nbsp; ${ROUNDS[currentRound].questions.length} questions</div>`;
+
+  bqs.forEach((q, qi) => {
+    const key = getKey(qi);
+    const isRevealed = revealed[key];
+    const userAns = answers[key];
+    html += `<div class="q-card">
+      <div class="q-meta">Q${globalStart + qi + 1}</div>
+      <div class="q-text">${q.q}</div>
+      <div class="options" role="group" aria-label="Answer choices">`;
+    q.opts.forEach((opt, oi) => {
+      let cls = 'opt';
+      let dis = '';
+      if (isRevealed !== undefined) {
+        dis = 'disabled aria-disabled="true"';
+        if (oi === q.ans) cls += ' correct';
+        else if (oi === userAns && userAns !== q.ans) cls += ' wrong';
+      } else if (userAns === oi) {
+        cls += ' selected';
+      }
+      const label = String.fromCharCode(65 + oi);
+      html += `<button class="${cls}" ${dis} onclick="selectOpt(${qi}, ${oi})" aria-label="Option ${label}">
+        <span class="opt-label" aria-hidden="true">${label}</span>
+        <span>${opt}</span>
+      </button>`;
+    });
+    html += `</div>`;
+    html += `<div class="explanation ${isRevealed !== undefined ? 'show' : ''}" role="note">${q.exp}</div>`;
+    html += `</div>`;
+  });
+
+  const allAnswered = bqs.every((_, i) => answers[getKey(i)] !== undefined);
+  const allRevealed = bqs.every((_, i) => revealed[getKey(i)] !== undefined);
+
+  html += `<div class="batch-nav">`;
+  if (currentBatch > 0) html += `<button class="btn" onclick="prevBatch()">← Prev</button>`;
+  if (!allRevealed) {
+    html += `<button class="btn primary" onclick="submitBatch()" ${!allAnswered ? 'disabled' : ''}>Submit batch</button>`;
+  } else {
+    const isLast = currentBatch >= totalBatches(currentRound) - 1;
+    if (!isLast) {
+      html += `<button class="btn primary" onclick="nextBatch()">Next batch →</button>`;
+    } else {
+      html += `<button class="btn primary" onclick="finishRound()">Finish round →</button>`;
+    }
+  }
+  if (scored.length > 0) {
+    html += `<div class="score-chip">Batch: <span>${correct.length}/${scored.length}</span></div>`;
+  }
+  html += `</div>`;
+
+  document.getElementById('quizArea').innerHTML = html;
+}
+
+function selectOpt(qi, oi) {
+  const key = getKey(qi);
+  if (revealed[key] !== undefined) return;
+  answers[key] = oi;
+  renderBatch();
+}
+
+function submitBatch() {
+  const bqs = getBatchQuestions();
+  bqs.forEach((q, qi) => {
+    const key = getKey(qi);
+    if (answers[key] !== undefined) revealed[key] = true;
+  });
+  renderBatch();
+}
+
+function nextBatch() {
+  currentBatch++;
+  renderBatch();
+  document.getElementById('app').scrollIntoView({ behavior: 'smooth' });
+}
+
+function prevBatch() {
+  if (currentBatch > 0) { currentBatch--; renderBatch(); }
+}
+
+function finishRound() {
+  const qs = ROUNDS[currentRound].questions;
+  let score = 0;
+  qs.forEach((q, i) => {
+    const key = `${currentRound}_${i}`;
+    if (answers[key] === q.ans) score++;
+  });
+  roundScores[currentRound] = score;
+  const pct = Math.round(score / qs.length * 100);
+  let emoji = pct >= 80 ? '🔥' : pct >= 60 ? '👍' : '📚';
+  document.getElementById('quizArea').innerHTML = `
+    <div class="round-complete">
+      <div class="big-score">${score}/${qs.length}</div>
+      <h2>${ROUNDS[currentRound].label} complete ${emoji}</h2>
+      <p>${pct}% · ${pct >= 80 ? 'Strong. Move on.' : pct >= 60 ? 'Decent — review the wrong ones before exam.' : 'Review the explanations above before next round.'}</p>
+      <div class="round-complete-btns">
+        <button class="btn" onclick="reviewRound()">Review answers</button>
+        ${currentRound < 3 ? `<button class="btn primary" onclick="switchRound(${currentRound + 1})">Next round →</button>` : '<button class="btn primary" onclick="allDone()">See final score</button>'}
+      </div>
+    </div>`;
+  renderTabs();
+}
+
+function reviewRound() {
+  currentBatch = 0;
+  renderBatch();
+}
+
+function allDone() {
+  let total = 0, got = 0;
+  ROUNDS.forEach((r, ri) => {
+    total += r.questions.length;
+    r.questions.forEach((q, i) => { if (answers[`${ri}_${i}`] === q.ans) got++; });
+  });
+  const pct = Math.round(got / total * 100);
+  document.getElementById('quizArea').innerHTML = `
+    <div class="round-complete">
+      <div class="big-score">${got}/${total}</div>
+      <h2>All rounds complete</h2>
+      <p>${pct}% overall · ${pct >= 80 ? 'Exam ready 🔥' : 'Focus on the red questions before you go in.'}</p>
+      <button class="btn" onclick="switchRound(0)">Start over</button>
+    </div>`;
+  renderTabs();
+}
+
+function switchRound(i) {
+  currentRound = i;
+  currentBatch = 0;
+  if (roundScores[i] !== null) {
+    finishRound();
+  } else {
+    renderBatch();
+  }
+  document.getElementById('app').scrollIntoView({ behavior: 'smooth' });
+}
+
+renderBatch();
+</script>
+</body>
+</html>
